@@ -12,6 +12,7 @@ from keyboards import start_keyboard_inline, menu_keyboard_inline_1, menu_keyboa
 class Reg(StatesGroup):
     password = State()
     delete = State()
+    delete2
 
 
 router = Router()
