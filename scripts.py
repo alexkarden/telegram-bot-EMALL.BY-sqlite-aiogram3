@@ -25,7 +25,7 @@ def convert_str_to_date(date_str):
         return int(date_object.timestamp())
     except ValueError as e:  # Обрабатываем возможную ошибку преобразования строки
         # Выводим сообщение об ошибке, если строка не соответствует ожидаемому формату
-        print(f"Ошибка преобразования строки даты: {e}")
+        logging.error(f"Ошибка преобразования строки даты: {e}")
         return None  # Возвращаем None в случае ошибки
 
 
@@ -42,7 +42,7 @@ def convert_date_to_str(date_sec,hours):
         return naive_datetime  # Возвращаем отформатированную строку даты
     except Exception as e:  # Обрабатываем любые исключения, которые могут произойти
         # Выводим сообщение об ошибке, если произошла ошибка во время преобразования
-        print(f"Ошибка преобразования даты: {e}")
+        logging.error(f"Ошибка преобразования даты: {e}")
         return None  # Возвращаем None в случае ошибки
 
 
@@ -154,9 +154,9 @@ def get_order():
         x = response.json()  # Получаем JSON ответ от сервера
         return x
     except requests.exceptions.HTTPError as http_err:
-        print(f"HTTP error occurred: {http_err}")  # Вывод ошибки для отладки
+        logging.error(f"HTTP error occurred: {http_err}")  # Вывод ошибки для отладки
     except Exception as err:
-        print(f"An error occurred: {err}")  # Общая обработка исключений
+        logging.error(f"An error occurred: {err}")  # Общая обработка исключений
 
 
 
@@ -308,13 +308,13 @@ async def rassilka_full(bot: Bot):
             if can_send_message():
                 full_all_list = full_worktime + full_alltime
             else:
-                print("Сообщение нельзя отправить вне рабочего времени или в выходной.")
+
                 full_all_list = full_alltime
 
             if can_send_message():
                 short_all_list = short_worktime + short_alltime
             else:
-                print("Сообщение нельзя отправить вне рабочего времени или в выходной.")
+
                 short_all_list = short_alltime
 
 
@@ -434,6 +434,16 @@ async def del_password_db(password):
 
 
 
+#удаление пользователя
+async def del_user_db(user_id):
+    try:
+        async with aiosqlite.connect(DATABASE_NAME) as db:
+            await db.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
+            await db.commit()
+    except Exception as e:
+        logging.error(f"Ошибка в функции del_user_db: {e}")
+
+
 
 
 #Получение статуса подписки
@@ -486,6 +496,23 @@ async def get_list_user_with_status_db(type_of_notification, notification_freque
         # Логируем ошибку или обрабатываем её как-то иначе
         logging.error(f"Произошла ошибка при получении списка пользователей: {e}")
         return []  # Возвращаем пустой список в случае ошибки
+
+
+
+
+# Получение списка пользователей
+async def get_list_user_for_admins_db(user_added,user_blocked):
+    try:
+        async with aiosqlite.connect(DATABASE_NAME) as db:
+            async with db.execute("SELECT * FROM users WHERE user_added = ? AND user_blocked = ?", (user_added,user_blocked,)) as cursor:
+                list_user_for_admins = await cursor.fetchall()  # Здесь должен быть await для получения результата
+
+                return list_user_for_admins
+    except aiosqlite.Error as e:
+        # Логируем ошибку или обрабатываем её как-то иначе
+        logging.error(f"Произошла ошибка при получении списка пользователей: {e}")
+        return []  # Возвращаем пустой список в случае ошибки
+
 
 
 
