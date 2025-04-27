@@ -1,18 +1,20 @@
 from aiogram import Router
+from aiogram import Bot
+
 from aiogram.enums import ParseMode
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery, FSInputFile, URLInputFile
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.context import FSMContext
-from config import ULNAME, LISTOFADMINS, BOTNAME
-from scripts import add_user_db, add_password_db, get_password_db, del_password_db, get_list_user_db
+from config import ULNAME, LISTOFADMINS, BOTNAME,IDDEVELOPER
+from scripts import add_user_db, add_password_db, get_password_db, del_password_db, get_list_user_db, get_list_user_for_admins_db, del_user_db
 from keyboards import start_keyboard_inline, menu_keyboard_inline_1, menu_keyboard_inline_11, menu_keyboard_inline_111, menu_keyboard_inline_121, menu_keyboard_inline_21, menu_keyboard_inline_3, create_dynamic_keyboard_select
 
 
 class Reg(StatesGroup):
     password = State()
-    delete = State()
-    delete2
+    developer = State()
 
 
 router = Router()
@@ -81,6 +83,30 @@ async def reg2(message: Message, state:FSMContext):
     await state.clear()
 
 
+@router.message(Reg.developer)
+async def developer(message: Message, state: FSMContext, bot:Bot):
+    await state.update_data(developer=message.text)
+    data = await state.get_data()
+    user_id = message.from_user.id
+    user_name = message.from_user.username
+    text = (f"Это сообщение отправлено из бота {BOTNAME}\nКомпании {ULNAME}\n"
+            f"Отправил пользователь @{user_name} с id: {user_id}\n\n")
+
+    # Преобразование словаря в строку для корректного отображения
+      # или используйте json.dumps(data) для более читабельного формата
+    text_bot = text + f"{data['developer']}"
+
+    await bot.send_message(chat_id=IDDEVELOPER, text=text_bot, parse_mode='HTML')
+    await message.answer(f"Сообщение отправлено",
+                         reply_markup=await menu_keyboard_inline_1(message.from_user.id), parse_mode=ParseMode.HTML)
+    await state.clear()
+
+
+
+
+
+
+
 
 @router.message(Command('help'))
 async def cmd_help(message: Message):
@@ -140,7 +166,22 @@ async def callback_query(callback: CallbackQuery, state:FSMContext):
 
     elif data == 'menu12':
         await callback.answer()
-        await callback.message.edit_text(f"Здесь можно просматривать и удалять пользователей", reply_markup=menu_keyboard_inline_121,  parse_mode='HTML')
+        await callback.message.delete()
+        users_list = await get_list_user_for_admins_db(1,0)
+        for user in users_list:
+            user_info=(f"Пользователь {user[0]}\n"
+                       f"ID: {user[1]}, Username: {user[4]}, Имя: {user[2]} {user[3]}")
+            delete_keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="Удалить пользователя", callback_data=f'delete_{user[1]}')]])
+            await callback.message.answer(text=user_info, reply_markup = delete_keyboard_inline, parse_mode='HTML')
+        await callback.message.answer(f"Для возврата в меню", reply_markup=menu_keyboard_inline_121, parse_mode='HTML')
+
+
+
+
+
+
+
 
     elif data == 'menu13' or data == 'menu26' or data == 'menu31':
         await callback.answer()
@@ -196,3 +237,18 @@ async def callback_query(callback: CallbackQuery, state:FSMContext):
         await callback.message.delete()
         await state.set_state(Reg.password)
         await callback.message.answer('Введите пароль', parse_mode=ParseMode.HTML)
+
+
+    elif data == 'developer':
+        # Удаляем сообщение с клавиатурой
+        await callback.message.delete()
+        await state.set_state(Reg.developer)
+        await callback.message.answer('Напишите сообщение разработчику и отправьте его', parse_mode=ParseMode.HTML)
+
+
+
+    elif data.startswith('delete_'):  # Исправлено
+        user_id = data.split('_')[1]
+        await del_user_db(user_id)
+        await callback.answer()
+        await callback.message.edit_text(f'Пользователь {user_id} удален', parse_mode=ParseMode.HTML)
