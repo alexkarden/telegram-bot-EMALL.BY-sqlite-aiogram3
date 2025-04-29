@@ -9,6 +9,7 @@ from scripts import init_db, add_order_to_db, rassilka_full, check_del_password_
 
 
 bot = Bot(token=TOKEN_TG)
+
 dp = Dispatcher()
 
 
