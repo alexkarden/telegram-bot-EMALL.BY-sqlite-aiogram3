@@ -12,6 +12,7 @@ start_keyboard_reply = ReplyKeyboardMarkup(keyboard=[
     ], resize_keyboard=True)
 
 
+
 start_keyboard_inline = InlineKeyboardMarkup(inline_keyboard=[
     [InlineKeyboardButton(text="Зарегистрироваться", callback_data='pasword')]
 ])
