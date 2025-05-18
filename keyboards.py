@@ -59,7 +59,6 @@ menu_keyboard_inline_3 = InlineKeyboardMarkup(inline_keyboard=[
 ])
 
 
-
 async def menu_keyboard_inline_1(tgid):
     button_texts = {
         'users': 'Управление пользователями',
