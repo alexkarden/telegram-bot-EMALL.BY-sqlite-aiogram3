@@ -163,48 +163,50 @@ def get_order():
 async def add_order_to_db():
     try:
         data = get_order()
-        async with aiosqlite.connect(DATABASE_NAME) as db:
+        if data != None:
 
-            # Извлекаем основные данные
-            for entry in data['data']:
-                number_of_order = entry['id']
-                time_start = convert_str_to_date(entry['time_start'])
-                time_end = convert_str_to_date(entry['time_end'])
-                send_status=0
-                resend_status=0
-                for box in entry['boxes']:
-                    order_cost = box['item_price']
+            async with aiosqlite.connect(DATABASE_NAME) as db:
 
-                    async with db.execute("SELECT * FROM orders WHERE number_of_order = ?;", (number_of_order,)) as cursor:
-                        result = await cursor.fetchall()
-                        if not result:  # Проверяем, пуст ли список
-                            await db.execute(
-                                F"INSERT INTO orders (number_of_order, order_cost, time_start, time_end, send_status, resend_status) VALUES (?,?,?,?,?,?);",
-                                (number_of_order, order_cost, time_start, time_end, send_status, resend_status))
-                            for box in entry['boxes']:
-                                position = 0
-                                for item in box['items']:
-                                    position += 1
-                                    offer = item['offer']
-                                    if 'images' in offer:
-                                        image_url = offer['images'][0]
-                                    positions_number = position
-                                    positions_name = offer['name']
-                                    quantity = item['quantity']
-                                    price = item['price']
-                                    total_price = item['total_price']
+                # Извлекаем основные данные
+                for entry in data['data']:
+                    number_of_order = entry['id']
+                    time_start = convert_str_to_date(entry['time_start'])
+                    time_end = convert_str_to_date(entry['time_end'])
+                    send_status=0
+                    resend_status=0
+                    for box in entry['boxes']:
+                        order_cost = box['item_price']
 
-
-
-                                    await db.execute(
-                                        F"INSERT INTO positions (number_of_order, positions_number, positions_name, quantity, price, total_price, image_url) VALUES (?,?,?,?,?,?,?);",
-                                        (number_of_order, positions_number, positions_name, quantity, price, total_price, image_url))
+                        async with db.execute("SELECT * FROM orders WHERE number_of_order = ?;", (number_of_order,)) as cursor:
+                            result = await cursor.fetchall()
+                            if not result:  # Проверяем, пуст ли список
+                                await db.execute(
+                                    F"INSERT INTO orders (number_of_order, order_cost, time_start, time_end, send_status, resend_status) VALUES (?,?,?,?,?,?);",
+                                    (number_of_order, order_cost, time_start, time_end, send_status, resend_status))
+                                for box in entry['boxes']:
+                                    position = 0
+                                    for item in box['items']:
+                                        position += 1
+                                        offer = item['offer']
+                                        if 'images' in offer:
+                                            image_url = offer['images'][0]
+                                        positions_number = position
+                                        positions_name = offer['name']
+                                        quantity = item['quantity']
+                                        price = item['price']
+                                        total_price = item['total_price']
 
 
 
+                                        await db.execute(
+                                            F"INSERT INTO positions (number_of_order, positions_number, positions_name, quantity, price, total_price, image_url) VALUES (?,?,?,?,?,?,?);",
+                                            (number_of_order, positions_number, positions_name, quantity, price, total_price, image_url))
 
 
-            await db.commit()  # Не забудьте зафиксировать изменения
+
+
+
+                await db.commit()  # Не забудьте зафиксировать изменения
     except aiosqlite.Error as e:
         logging.error(f"Ошибка при инициализации базы данных: {e}")
 
