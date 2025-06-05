@@ -1,1 +1,1 @@
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/alexkarden/telegram-bot-EMALL.BY-sqlite-aiogram3)
+This document provides a comprehensive overview of the telegram bot system for emall.by marketplace order notifications. The system is a Python-based Telegram bot built with aiogram3 that automatically fetches new orders from the emall.by API and delivers customized notifications to registered users.
